@@ -26,7 +26,13 @@ Clients will update on the next auto check or manual check.
 
 ## Main files
 
-- `update.ps1`: compare version, download ZIP, copy files
-- `update.vbs`: manual update entry
-- `autocheck.vbs`: silent auto-check entry
+- `updater/update.ps1`: compare version, download ZIP, copy files
+- `updater/update.vbs`: manual update entry
+- `updater/autocheck.vbs`: silent auto-check entry
 - `version.json`: local version metadata
+
+## Folder structure
+
+- `assets/icons`: all image assets
+- `scripts`: playback control and title fallback scripts
+- `updater`: updater scripts

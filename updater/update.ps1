@@ -10,7 +10,12 @@ $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Windows.Forms
 
 $scriptRoot = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
-$localVersionFile = Join-Path $scriptRoot "version.json"
+$skinRoot = Split-Path -Path $scriptRoot -Parent
+if (-not (Test-Path -LiteralPath (Join-Path $skinRoot "version.json"))) {
+    $skinRoot = $scriptRoot
+}
+
+$localVersionFile = Join-Path $skinRoot "version.json"
 $repoName = ($Repo -split "/")[-1]
 $remoteVersionUrl = "https://raw.githubusercontent.com/$Repo/$Branch/version.json"
 $zipUrl = "https://codeload.github.com/$Repo/zip/refs/heads/$Branch"
@@ -127,7 +132,7 @@ try {
     }
 
     $copyLog = Join-Path $tempDir "copy.log"
-    & robocopy $repoFolder $scriptRoot /E /R:2 /W:1 /NFL /NDL /NP /NJH /NJS /XD ".git" ".github" /LOG:$copyLog | Out-Null
+    & robocopy $repoFolder $skinRoot /E /R:2 /W:1 /NFL /NDL /NP /NJH /NJS /XD ".git" ".github" /LOG:$copyLog | Out-Null
     $rc = $LASTEXITCODE
     if ($rc -ge 8) {
         $logText = ""
