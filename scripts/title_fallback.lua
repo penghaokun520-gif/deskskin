@@ -8,6 +8,35 @@ local currentTitle = "CloudMusic"
 local tick = 0
 local pollInterval = 2
 
+local function isGenericAppTitle(s)
+    if not s then
+        return true
+    end
+
+    local x = s:gsub("^%s+", ""):gsub("%s+$", ""):lower()
+    if x == "" then
+        return true
+    end
+
+    if x == "cloudmusic" then
+        return true
+    end
+
+    if x == "netease cloud music" then
+        return true
+    end
+
+    if x == "wang yi yun yin yue" then
+        return true
+    end
+
+    if x:find("cloudmusic", 1, true) == 1 then
+        return true
+    end
+
+    return false
+end
+
 local function trim(s)
     if not s then
         return ""
@@ -28,6 +57,19 @@ local function sanitizeLyric(s)
     s = trim(s)
 
     if s == "" or s == "0" then
+        return ""
+    end
+
+    return s
+end
+
+local function sanitizeTitle(s)
+    s = trim(s)
+    if s == "" or s == "0" then
+        return ""
+    end
+
+    if isGenericAppTitle(s) then
         return ""
     end
 
@@ -93,14 +135,19 @@ function Update()
     local playingStateValue = tonumber(SKIN:GetVariable("PlayingStateValue")) or 1
     local stateValue = getStateNumber()
 
-    local pluginTitle = getMeasureString("MeasureTitlePlugin")
-    if pluginTitle ~= "" and pluginTitle ~= "0" then
-        currentTitle = pluginTitle
-    elseif tick % pollInterval == 0 then
+    local pluginTitle = sanitizeTitle(getMeasureString("MeasureTitlePlugin"))
+
+    -- Window title is usually the most accurate track title for CloudMusic.
+    if tick % pollInterval == 0 then
         local fallbackTitle = queryWindowTitle()
+        fallbackTitle = sanitizeTitle(fallbackTitle)
         if fallbackTitle ~= "" then
             currentTitle = fallbackTitle
+        elseif pluginTitle ~= "" then
+            currentTitle = pluginTitle
         end
+    elseif pluginTitle ~= "" and isGenericAppTitle(currentTitle) then
+        currentTitle = pluginTitle
     end
 
     if currentTitle == "" then
