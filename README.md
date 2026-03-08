@@ -3,7 +3,7 @@
 This skin folder includes a built-in updater and is configured for:
 
 - Repo: `https://github.com/penghaokun520-gif/deskskin`
-- Branch: `main`
+- Update source: **GitHub Releases (latest)**
 
 ## How it works
 
@@ -21,12 +21,13 @@ When you publish a new version to GitHub:
 1. Edit `version.json` and increase `version` (example: `1.0.0` -> `1.0.1`).
 2. Optionally update `updated_at`.
 3. Commit and push to `main`.
+4. Create a release tag and publish release (example: `v1.0.1`).
 
-Clients will update on the next auto check or manual check.
+Clients update from the latest published release, not from branch files.
 
 ## Main files
 
-- `updater/update.ps1`: compare version, download ZIP, copy files
+- `updater/update.ps1`: compare local version vs latest release tag, then download release ZIP and copy files
 - `updater/update.vbs`: manual update entry
 - `updater/autocheck.vbs`: silent auto-check entry
 - `scripts/resolve_cloudmusic_path.ps1`: auto-detect CloudMusic install path

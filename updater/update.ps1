@@ -1,7 +1,6 @@
 param(
     [switch]$Auto,
-    [string]$Repo = "penghaokun520-gif/deskskin",
-    [string]$Branch = "main"
+    [string]$Repo = "penghaokun520-gif/deskskin"
 )
 
 Set-StrictMode -Version Latest
@@ -17,8 +16,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $skinRoot "version.json"))) {
 
 $localVersionFile = Join-Path $skinRoot "version.json"
 $repoName = ($Repo -split "/")[-1]
-$remoteVersionUrl = "https://raw.githubusercontent.com/$Repo/$Branch/version.json"
-$zipUrl = "https://codeload.github.com/$Repo/zip/refs/heads/$Branch"
+$releaseApiUrl = "https://api.github.com/repos/$Repo/releases/latest"
 
 function Show-Message {
     param(
@@ -64,12 +62,42 @@ function To-Version {
     }
 
     $clean = $Value.Trim().TrimStart("v", "V")
+    if ($clean -match "^(\d+\.\d+\.\d+(?:\.\d+)?)") {
+        $clean = $matches[1]
+    }
 
     try {
         return [Version]$clean
     } catch {
         return [Version]"0.0.0"
     }
+}
+
+function Get-LatestRelease {
+    $headers = @{
+        "Accept"     = "application/vnd.github+json"
+        "User-Agent" = "deskskin-updater"
+    }
+
+    try {
+        $release = Invoke-RestMethod -Uri $releaseApiUrl -Headers $headers -Method Get
+    } catch {
+        throw "Cannot read GitHub latest release. Publish at least one release first."
+    }
+
+    if ($null -eq $release) {
+        throw "GitHub latest release response is empty."
+    }
+
+    if ([string]::IsNullOrWhiteSpace([string]$release.tag_name)) {
+        throw "GitHub latest release has no tag_name."
+    }
+
+    if ([string]::IsNullOrWhiteSpace([string]$release.zipball_url)) {
+        throw "GitHub latest release has no zipball_url."
+    }
+
+    return $release
 }
 
 function Read-LocalVersion {
@@ -102,16 +130,17 @@ try {
     $localVersionText = Read-LocalVersion
     $localVersion = To-Version $localVersionText
 
-    $remoteMeta = Invoke-RestMethod -Uri $remoteVersionUrl -Method Get
-    $remoteVersionText = [string]$remoteMeta.version
+    $releaseMeta = Get-LatestRelease
+    $remoteVersionText = [string]$releaseMeta.tag_name
     $remoteVersion = To-Version $remoteVersionText
+    $zipUrl = [string]$releaseMeta.zipball_url
 
     if ($remoteVersion -le $localVersion) {
-        Show-Message "Already up to date.`nLocal version: $localVersionText"
+        Show-Message "Already up to date.`nLocal version: $localVersionText`nLatest release: $remoteVersionText"
         exit 0
     }
 
-    $confirmText = "New version found: $remoteVersionText`nCurrent version: $localVersionText`n`nUpdate now?"
+    $confirmText = "New release found: $remoteVersionText`nCurrent version: $localVersionText`n`nUpdate now?"
     if (-not (Confirm-Update -Text $confirmText)) {
         exit 0
     }
@@ -122,7 +151,7 @@ try {
     Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
     Expand-Archive -LiteralPath $zipPath -DestinationPath $tempDir -Force
 
-    $repoFolder = Join-Path $tempDir "$repoName-$Branch"
+    $repoFolder = Join-Path $tempDir "$repoName-$($remoteVersionText.TrimStart('v', 'V'))"
     if (-not (Test-Path -LiteralPath $repoFolder)) {
         $matched = Get-ChildItem -LiteralPath $tempDir -Directory | Where-Object { $_.Name -like "$repoName-*" } | Select-Object -First 1
         if ($null -eq $matched) {
