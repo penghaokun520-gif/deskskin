@@ -29,6 +29,7 @@ Clients will update on the next auto check or manual check.
 - `updater/update.ps1`: compare version, download ZIP, copy files
 - `updater/update.vbs`: manual update entry
 - `updater/autocheck.vbs`: silent auto-check entry
+- `scripts/resolve_cloudmusic_path.ps1`: auto-detect CloudMusic install path
 - `version.json`: local version metadata
 
 ## Folder structure
@@ -36,3 +37,8 @@ Clients will update on the next auto check or manual check.
 - `assets/icons`: all image assets
 - `scripts`: playback control and title fallback scripts
 - `updater`: updater scripts
+
+## Path detection
+
+- `scripts/play.vbs` now resolves `cloudmusic.exe` from process, registry, shortcuts, and known install locations.
+- Detected path is cached in `scripts/cloudmusic_path.cache` for faster startup.
